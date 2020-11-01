@@ -1,5 +1,6 @@
 class PostsController < ApplicationController
   before_action :set_post, only: [:show, :edit, :update, :destroy]
+  before_action :authenticate_user!, only: [:new, :create, :edit]
 
   # GET /posts
   # GET /posts.json
@@ -14,21 +15,25 @@ class PostsController < ApplicationController
 
   # GET /posts/new
   def new
-    @post = Post.new
+    @post = current_user.posts.build
   end
 
   # GET /posts/1/edit
   def edit
+    if current_user.id != @post.user_id
+      flash[:notice] = "You do not have authorization to edit this post" #if not logged in as the owner of the post
+      redirect_to root_path
+    end
   end
 
   # POST /posts
   # POST /posts.json
   def create
-    @post = Post.new(post_params)
+    @post = current_user.posts.build(post_params)
 
     respond_to do |format|
       if @post.save
-        format.html { redirect_to @post, notice: 'Post was successfully created.' }
+        format.html { redirect_to root_path, notice: 'Post was successfully created.' }
         format.json { render :show, status: :created, location: @post }
       else
         format.html { render :new }
